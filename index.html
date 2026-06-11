@@ -1,0 +1,1003 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Мой трекер</title>
+<link rel="manifest" href="./manifest.json">
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --bg:#0f0f1a;--card:#1a1a2e;--accent:#4f8ef7;--text:#e8e8f0;--text2:#8888aa;
+  --green:#2ecc71;--red:#e74c3c;--orange:#f39c12;--purple:#9b59b6;--blue:#3498db;
+  --radius-card:16px;--radius-btn:12px;
+}
+html,body{height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:15px;line-height:1.5;overscroll-behavior:none}
+body{padding-bottom:calc(80px + env(safe-area-inset-bottom))}
+/* SCREENS */
+.screen{display:none;padding:16px;padding-top:12px;min-height:calc(100vh - 80px);animation:fadeIn .2s ease}
+.screen.active{display:block}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+/* CARDS */
+.card{background:var(--card);border-radius:var(--radius-card);padding:16px;margin-bottom:12px}
+.card-title{font-size:13px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.8px;margin-bottom:12px}
+/* INPUTS */
+input[type=number],input[type=text],textarea{background:#0f0f1a;border:1px solid #2a2a3e;border-radius:8px;color:var(--text);padding:8px 12px;font-size:15px;width:100%;outline:none;transition:border-color .2s}
+input[type=number]:focus,input[type=text]:focus,textarea:focus{border-color:var(--accent)}
+textarea{resize:none;overflow:hidden;min-height:60px}
+input[type=range]{width:100%;accent-color:var(--accent);height:4px;cursor:pointer}
+/* PROGRESS */
+.progress-wrap{background:#2a2a3e;border-radius:99px;height:6px;overflow:hidden;margin-top:6px}
+.progress-bar{height:100%;border-radius:99px;transition:width .4s ease}
+/* CHECKBOX */
+.check-item{display:flex;align-items:flex-start;gap:12px;padding:10px 0;border-bottom:1px solid #1e1e30}
+.check-item:last-child{border-bottom:none}
+.check-item input[type=checkbox]{width:20px;height:20px;min-width:20px;accent-color:var(--accent);cursor:pointer;margin-top:2px}
+.check-item label{flex:1;cursor:pointer;font-size:14px}
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:10px 18px;border:none;border-radius:var(--radius-btn);font-size:14px;font-weight:600;cursor:pointer;transition:opacity .15s,transform .1s;user-select:none}
+.btn:active{opacity:.75;transform:scale(.97)}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-green{background:var(--green);color:#fff}
+.btn-ghost{background:#2a2a3e;color:var(--text)}
+.btn-sm{padding:6px 12px;font-size:13px}
+/* SAVE BUTTON */
+#saveBtn{position:fixed;bottom:calc(80px + env(safe-area-inset-bottom) + 8px);left:16px;right:16px;z-index:90;padding:14px;font-size:16px}
+/* TAB BAR */
+#tabBar{position:fixed;bottom:0;left:0;right:0;z-index:100;background:#12122a;border-top:1px solid #2a2a3e;display:flex;padding-bottom:env(safe-area-inset-bottom)}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:8px 4px 6px;gap:3px;cursor:pointer;color:var(--text2);font-size:10px;font-weight:500;border:none;background:none;transition:color .15s}
+.tab.active{color:var(--accent)}
+.tab svg{width:22px;height:22px}
+/* BADGES */
+.badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:600}
+.badge-morning{background:#1a3a2a;color:#2ecc71}
+.badge-noon{background:#3a2a0a;color:#f39c12}
+.badge-evening{background:#2a1a3a;color:#9b59b6}
+/* ACCORDION */
+.accord-header{display:flex;justify-content:space-between;align-items:center;cursor:pointer;padding:14px 16px;background:var(--card);border-radius:var(--radius-card);margin-bottom:4px;transition:background .15s}
+.accord-header.active{border-radius:var(--radius-card) var(--radius-card) 0 0;background:#1e1e3a}
+.accord-body{display:none;background:#1e1e3a;border-radius:0 0 var(--radius-card) var(--radius-card);padding:0 16px 12px;margin-bottom:8px}
+.accord-body.open{display:block}
+/* EXERCISE ROW */
+.ex-row{padding:10px 0;border-bottom:1px solid #2a2a3e}
+.ex-row:last-child{border-bottom:none}
+.ex-name{font-weight:600;font-size:14px}
+.ex-meta{font-size:12px;color:var(--text2);margin-top:2px}
+.ex-weight-row{display:flex;align-items:center;gap:8px;margin-top:8px}
+.ex-weight-row input{width:80px}
+/* MODALS */
+.modal-overlay{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);display:none;align-items:flex-end}
+.modal-overlay.open{display:flex;animation:fadeIn .2s}
+.bottom-sheet{background:var(--card);border-radius:20px 20px 0 0;padding:20px;width:100%;max-height:80vh;overflow-y:auto;padding-bottom:calc(20px + env(safe-area-inset-bottom))}
+.sheet-drag{width:40px;height:4px;background:#3a3a5a;border-radius:99px;margin:0 auto 16px}
+/* STAT CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:16px}
+.cal-head{text-align:center;font-size:11px;color:var(--text2);padding:4px 0}
+.cal-day{width:100%;aspect-ratio:1;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;cursor:pointer;border:none;font-weight:600}
+.cal-day.empty{background:transparent;cursor:default}
+.cal-day.no-data{background:#2a2a3e;color:var(--text2)}
+.cal-day.partial{background:#3a2a0a;color:var(--orange)}
+.cal-day.full{background:#0a3a1a;color:var(--green)}
+.cal-day.today{background:var(--accent);color:#fff}
+/* CHARTS */
+canvas{border-radius:8px;background:#0f0f1a;width:100%!important}
+/* INLINE EDIT */
+.edit-form{background:#0f0f1a;border-radius:8px;padding:12px;margin-top:8px;display:none}
+.edit-form.open{display:block}
+.edit-row{display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap}
+.edit-row label{font-size:12px;color:var(--text2);min-width:60px}
+.edit-row input{flex:1;min-width:60px}
+/* MOOD */
+.mood-labels{display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-top:4px}
+/* GRID 2 */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.stat-mini{background:#0f0f1a;border-radius:10px;padding:12px;text-align:center}
+.stat-mini .val{font-size:22px;font-weight:700;color:var(--accent)}
+.stat-mini .lbl{font-size:11px;color:var(--text2);margin-top:2px}
+/* SECTION TITLE */
+.sec-title{font-size:18px;font-weight:700;margin-bottom:14px;margin-top:4px}
+/* DAY HEADER */
+.day-header{text-align:center;margin-bottom:16px}
+.day-header .date{font-size:22px;font-weight:700}
+.day-header .weekday{font-size:14px;color:var(--text2);margin-top:2px}
+/* TOGGLE */
+.toggle-row{display:flex;background:#0f0f1a;border-radius:10px;padding:3px;margin-bottom:14px}
+.toggle-btn{flex:1;padding:8px;text-align:center;border-radius:8px;cursor:pointer;font-size:13px;font-weight:600;color:var(--text2);border:none;background:none;transition:all .2s}
+.toggle-btn.active{background:var(--accent);color:#fff}
+/* VITAMIN INFO */
+.vit-info{font-size:12px;color:var(--text2);margin-top:4px;display:none}
+.vit-info.open{display:block}
+.vit-item{padding:10px 0;border-bottom:1px solid #1e1e30}
+.vit-item:last-child{border-bottom:none}
+.vit-top{display:flex;align-items:center;gap:10px}
+.vit-name{flex:1;font-size:14px;font-weight:600}
+.vit-dose{font-size:12px;color:var(--text2)}
+</style>
+</head>
+<body>
+<!-- SCREEN 1: TODAY -->
+<div id="screen-today" class="screen active">
+  <div class="day-header">
+    <div class="date" id="todayDate"></div>
+    <div class="weekday" id="todayWeekday"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Показатели дня</div>
+    <div style="margin-bottom:14px">
+      <label style="font-size:13px;color:var(--text2)">Вес (кг)</label>
+      <input type="number" id="inp-weight" min="50" max="200" step="0.1" placeholder="80.0" style="margin-top:6px">
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label style="font-size:13px;color:var(--text2)">Вода (л)</label>
+        <span id="water-val" style="font-size:13px;font-weight:600;color:var(--blue)">0 / 3.0 л</span>
+      </div>
+      <input type="number" id="inp-water" min="0" max="10" step="0.1" placeholder="0.0" style="margin-top:6px">
+      <div class="progress-wrap"><div class="progress-bar" id="pb-water" style="background:var(--blue);width:0%"></div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label style="font-size:13px;color:var(--text2)">Сон (ч)</label>
+        <span id="sleep-val" style="font-size:13px;font-weight:600;color:var(--purple)">0 / 8 ч</span>
+      </div>
+      <input type="number" id="inp-sleep" min="0" max="24" step="0.5" placeholder="7.5" style="margin-top:6px">
+      <div class="progress-wrap"><div class="progress-bar" id="pb-sleep" style="background:var(--purple);width:0%"></div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label style="font-size:13px;color:var(--text2)">Калории (ккал)</label>
+        <span id="cal-val" style="font-size:13px;font-weight:600;color:var(--orange)">0 / 1900</span>
+      </div>
+      <input type="number" id="inp-calories" min="0" max="9999" step="10" placeholder="1900" style="margin-top:6px">
+      <div class="progress-wrap"><div class="progress-bar" id="pb-calories" style="background:var(--orange);width:0%"></div></div>
+    </div>
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <label style="font-size:13px;color:var(--text2)">Самочувствие</label>
+        <span id="mood-val" style="font-size:15px;font-weight:700">5</span>
+      </div>
+      <input type="range" id="inp-mood" min="1" max="10" step="1" value="5" style="margin-top:8px">
+      <div class="mood-labels"><span>😞 Плохо</span><span>😐 Нормально</span><span>😄 Отлично</span></div>
+    </div>
+  </div>
+
+  <div class="card" id="workout-today-block" style="display:none">
+    <div class="card-title">Тренировка сегодня</div>
+    <div id="workout-today-name" style="font-weight:700;font-size:16px;margin-bottom:12px"></div>
+    <div id="workout-today-list"></div>
+    <div style="margin-top:12px">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);margin-bottom:4px">
+        <span>Выполнено</span><span id="workout-progress-text">0 из 0</span>
+      </div>
+      <div class="progress-wrap"><div class="progress-bar" id="pb-workout" style="background:var(--green);width:0%"></div></div>
+    </div>
+    <textarea id="workout-note" placeholder="Заметка о тренировке..." style="margin-top:12px" rows="2"></textarea>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Питание сегодня</div>
+    <div id="meal-type-badge" style="font-size:12px;margin-bottom:10px"></div>
+    <div id="meals-today-list"></div>
+    <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center">
+      <span style="font-size:13px;color:var(--text2)">Итого ккал из отмеченных:</span>
+      <span id="meals-kcal-total" style="font-weight:700;color:var(--orange)">0</span>
+    </div>
+  </div>
+
+  <button class="btn btn-green" id="saveBtn" onclick="saveDay()">💾 Сохранить день</button>
+  <div style="height:60px"></div>
+</div>
+
+<!-- SCREEN 2: WORKOUTS -->
+<div id="screen-workouts" class="screen">
+  <div class="sec-title">Тренировки</div>
+  <div id="workouts-list"></div>
+</div>
+
+<!-- SCREEN 3: NUTRITION -->
+<div id="screen-nutrition" class="screen">
+  <div class="sec-title">Питание</div>
+  <div class="toggle-row">
+    <button class="toggle-btn active" id="nut-train-btn" onclick="setNutMode('train')">🏋 Тренировочный</button>
+    <button class="toggle-btn" id="nut-rest-btn" onclick="setNutMode('rest')">🛋 День отдыха</button>
+  </div>
+  <div class="card" id="nut-summary" style="display:flex;gap:0;padding:12px">
+    <div class="stat-mini" style="flex:1;background:transparent"><div class="val" id="nut-kcal">0</div><div class="lbl">ккал</div></div>
+    <div class="stat-mini" style="flex:1;background:transparent"><div class="val" id="nut-prot" style="color:var(--green)">0</div><div class="lbl">белок г</div></div>
+    <div class="stat-mini" style="flex:1;background:transparent"><div class="val" id="nut-carb" style="color:var(--orange)">0</div><div class="lbl">углев г</div></div>
+    <div class="stat-mini" style="flex:1;background:transparent"><div class="val" id="nut-fat" style="color:var(--red)">0</div><div class="lbl">жиры г</div></div>
+  </div>
+  <div id="nutrition-list"></div>
+</div>
+
+<!-- SCREEN 4: VITAMINS -->
+<div id="screen-vitamins" class="screen">
+  <div class="sec-title">Витамины и добавки</div>
+  <div style="margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text2);margin-bottom:6px">
+      <span>Принято сегодня</span><span id="vit-progress-text">0 из 12</span>
+    </div>
+    <div class="progress-wrap" style="height:8px"><div class="progress-bar" id="pb-vitamins" style="background:var(--accent);width:0%"></div></div>
+  </div>
+  <div id="vitamins-list"></div>
+</div>
+
+<!-- SCREEN 5: STATS -->
+<div id="screen-stats" class="screen">
+  <div class="sec-title">Статистика</div>
+  <div class="card">
+    <div class="card-title" id="cal-month-title"></div>
+    <div class="cal-grid" id="cal-days-head"></div>
+    <div class="cal-grid" id="cal-days"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Сводка за месяц</div>
+    <div class="grid2" id="stats-summary"></div>
+  </div>
+  <div class="card">
+    <div class="card-title">Динамика веса (30 дней)</div>
+    <canvas id="chart-weight" height="120"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-title">Вода (л)</div>
+    <canvas id="chart-water" height="100"></canvas>
+  </div>
+  <div class="card">
+    <div class="card-title">Сон (ч)</div>
+    <canvas id="chart-sleep" height="100"></canvas>
+  </div>
+</div>
+
+<!-- TAB BAR -->
+<nav id="tabBar">
+  <button class="tab active" onclick="switchTab('today',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Сегодня
+  </button>
+  <button class="tab" onclick="switchTab('workouts',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.5 6.5h11M6.5 17.5h11M3 12h18M6.5 6.5v11M17.5 6.5v11"/></svg>
+    Тренировки
+  </button>
+  <button class="tab" onclick="switchTab('nutrition',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2C6.5 2 2 6.5 2 12s4.5 10 10 10 10-4.5 10-10S17.5 2 12 2z"/><path d="M12 6v6l4 2"/></svg>
+    Питание
+  </button>
+  <button class="tab" onclick="switchTab('vitamins',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><ellipse cx="12" cy="12" rx="10" ry="5" transform="rotate(45 12 12)"/><line x1="7.5" y1="7.5" x2="16.5" y2="16.5"/></svg>
+    Витамины
+  </button>
+  <button class="tab" onclick="switchTab('stats',this)">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+    Статистика
+  </button>
+</nav>
+
+<!-- BOTTOM SHEET MODAL -->
+<div class="modal-overlay" id="dayModal" onclick="closeDayModal(event)">
+  <div class="bottom-sheet">
+    <div class="sheet-drag"></div>
+    <div id="dayModalContent"></div>
+  </div>
+</div>
+<script>
+// ═══ DATA ═══
+const DAYS_RU = ['Воскресенье','Понедельник','Вторник','Среда','Четверг','Пятница','Суббота'];
+const DAYS_SHORT = ['Вс','Пн','Вт','Ср','Чт','Пт','Сб'];
+const MONTHS_RU = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+const WORKOUT_DAYS = [1,2,6,0]; // пн,вт,сб,вс
+
+const WORKOUTS = {
+  1: {
+    name:'Понедельник — Низ тела',
+    exercises:[
+      {id:'mon1',name:'Велотренажёр (разминка)',sets:'1 сет',reps:'10 мин',startWeight:'уровень 3'},
+      {id:'mon2',name:'Приседания в тренажёре Смита',sets:'4',reps:'12',startWeight:'40 кг'},
+      {id:'mon3',name:'Жим ногами',sets:'4',reps:'15',startWeight:'80 кг'},
+      {id:'mon4',name:'Румынская тяга с гантелями',sets:'3',reps:'12',startWeight:'16 кг'},
+      {id:'mon5',name:'Сгибание ног лёжа',sets:'3',reps:'15',startWeight:'25 кг'},
+      {id:'mon6',name:'Разгибание ног сидя',sets:'3',reps:'15',startWeight:'30 кг'},
+      {id:'mon7',name:'Подъём на икры сидя',sets:'3',reps:'20',startWeight:'40 кг'},
+      {id:'mon8',name:'Эллипс (кардио)',sets:'1 сет',reps:'15 мин',startWeight:'уровень 5'},
+    ]
+  },
+  2: {
+    name:'Вторник — Верх тела',
+    exercises:[
+      {id:'tue1',name:'Гребной тренажёр (разминка)',sets:'1 сет',reps:'8 мин',startWeight:'уровень 3'},
+      {id:'tue2',name:'Жим гантелей лёжа',sets:'4',reps:'12',startWeight:'20 кг'},
+      {id:'tue3',name:'Тяга блока к поясу',sets:'4',reps:'12',startWeight:'45 кг'},
+      {id:'tue4',name:'Жим гантелей сидя (плечи)',sets:'3',reps:'12',startWeight:'12 кг'},
+      {id:'tue5',name:'Тяга верхнего блока',sets:'3',reps:'12',startWeight:'45 кг'},
+      {id:'tue6',name:'Жим узким хватом',sets:'3',reps:'12',startWeight:'30 кг'},
+      {id:'tue7',name:'Сгибание рук с гантелями',sets:'3',reps:'12',startWeight:'12 кг'},
+      {id:'tue8',name:'Сведение рук в тренажёре',sets:'3',reps:'15',startWeight:'35 кг'},
+      {id:'tue9',name:'Эллипс (кардио)',sets:'1 сет',reps:'15 мин',startWeight:'уровень 5'},
+    ]
+  },
+  6: {
+    name:'Суббота — Фулбоди',
+    exercises:[
+      {id:'sat1',name:'Велотренажёр (разминка)',sets:'1 сет',reps:'10 мин',startWeight:'уровень 4'},
+      {id:'sat2',name:'Становая тяга в Смите',sets:'4',reps:'10',startWeight:'50 кг'},
+      {id:'sat3',name:'Жим на наклонной скамье',sets:'4',reps:'12',startWeight:'40 кг'},
+      {id:'sat4',name:'Тяга гантели одной рукой',sets:'3',reps:'10',startWeight:'22 кг'},
+      {id:'sat5',name:'Жим ногами широко (ягодицы)',sets:'4',reps:'15',startWeight:'90 кг'},
+      {id:'sat6',name:'Разводка гантелей лёжа',sets:'3',reps:'15',startWeight:'12 кг'},
+      {id:'sat7',name:'Скручивания в блоке',sets:'3',reps:'20',startWeight:'15 кг'},
+      {id:'sat8',name:'HIIT велотренажёр',sets:'10 интервалов',reps:'30 сек',startWeight:'уровень 10/3'},
+    ]
+  },
+  0: {
+    name:'Воскресенье — Восстановление',
+    exercises:[
+      {id:'sun1',name:'Ходьба на дорожке',sets:'1 сет',reps:'15 мин',startWeight:'5 км/ч'},
+      {id:'sun2',name:'Жим гантелей лёжа (лёгко)',sets:'3',reps:'15',startWeight:'12 кг'},
+      {id:'sun3',name:'Тяга верхнего блока (лёгко)',sets:'3',reps:'15',startWeight:'30 кг'},
+      {id:'sun4',name:'Разгибание + сгибание суперсет',sets:'3',reps:'20',startWeight:'20 кг'},
+      {id:'sun5',name:'Сведение рук (лёгко)',sets:'3',reps:'20',startWeight:'20 кг'},
+      {id:'sun6',name:'Эллипс (заминка)',sets:'1 сет',reps:'10 мин',startWeight:'уровень 3'},
+    ]
+  }
+};
+
+const MEALS = {
+  train:[
+    {id:'tm1',time:'07:00',name:'Завтрак: Омлет 3 яйца + овсянка 80г + масло',kcal:480,p:35,c:48,f:14},
+    {id:'tm2',time:'10:30',name:'Перекус: Творог 200г + сметана 1 ст.л.',kcal:250,p:32,c:6,f:8},
+    {id:'tm3',time:'13:30',name:'Обед: Куриная грудка 180г + гречка 100г + огурцы',kcal:580,p:55,c:60,f:8},
+    {id:'tm4',time:'16:30',name:'До тренировки: Хлеб ц/з 2 шт + 2 яйца + огурец',kcal:290,p:18,c:28,f:9},
+    {id:'tm5',time:'20:00',name:'После тренировки: Протеин 30г + кефир 150г',kcal:280,p:40,c:12,f:5},
+    {id:'tm6',time:'21:00',name:'Ужин: Рыба 200г + тушёные овощи',kcal:380,p:40,c:8,f:14},
+  ],
+  rest:[
+    {id:'rm1',time:'08:00',name:'Завтрак: Яичница 3 яйца + хлеб ц/з 2 шт + помидор',kcal:400,p:25,c:28,f:16},
+    {id:'rm2',time:'13:00',name:'Обед: Куриный суп + гречка 150г',kcal:520,p:40,c:55,f:10},
+    {id:'rm3',time:'16:30',name:'Перекус: Творог 200г + кефир 200мл',kcal:300,p:35,c:12,f:6},
+    {id:'rm4',time:'19:30',name:'Ужин: Котлеты из говядины 250г + тушёные овощи',kcal:560,p:50,c:10,f:22},
+  ]
+};
+
+const VITAMINS = [
+  {id:'v1',group:'Базовые (каждый день)',name:'Витамин D3 + K2',dose:'5000 МЕ D3 + 100 мкг K2',when:'morning',whenLabel:'утро',info:'Иммунитет, кости, тестостерон. Принимать с жирной едой.'},
+  {id:'v2',group:'Базовые (каждый день)',name:'Магний глицинат',dose:'400–500 мг',when:'evening',whenLabel:'вечер',info:'Качество сна, восстановление мышц, снижение кортизола.'},
+  {id:'v3',group:'Базовые (каждый день)',name:'Цинк пиколинат',dose:'25–30 мг',when:'evening',whenLabel:'вечер',info:'Тестостерон, иммунитет. Не принимать с кофе.'},
+  {id:'v4',group:'Базовые (каждый день)',name:'Омега-3 (EPA+DHA)',dose:'2–3 г',when:'morning',whenLabel:'утро/обед',info:'Воспаление, сердце, суставы, мозг. С едой.'},
+  {id:'v5',group:'Адаптогены (курс 3 мес)',name:'Ашваганда KSM-66',dose:'300–600 мг',when:'morning',whenLabel:'утро',info:'Кортизол ↓, тестостерон ↑, стресс ↓, сон ↑.'},
+  {id:'v6',group:'Адаптогены (курс 3 мес)',name:'Родиола розовая',dose:'200–400 мг',when:'morning',whenLabel:'утро',info:'Энергия, выносливость. Цикл: 4 нед приём / 2 нед перерыв.'},
+  {id:'v7',group:'Адаптогены (курс 3 мес)',name:'Фосфатидилсерин',dose:'200–400 мг',when:'evening',whenLabel:'вечер',info:'Кортизол после тренировки ↓, память, фокус.'},
+  {id:'v8',group:'Либидо и гормоны (с 5-й недели)',name:'Tongkat Ali',dose:'200–400 мг',when:'morning',whenLabel:'утро',info:'Тестостерон ↑, либидо ↑, жиросжигание. С едой.'},
+  {id:'v9',group:'Либидо и гормоны (с 5-й недели)',name:'Бор',dose:'6–10 мг',when:'noon',whenLabel:'обед',info:'Свободный тестостерон ↑, ГСПГ ↓. С едой.'},
+  {id:'v10',group:'Либидо и гормоны (с 5-й недели)',name:'Мака перуанская',dose:'1500–3000 мг',when:'noon',whenLabel:'обед',info:'Либидо, энергия, фертильность. С едой.'},
+  {id:'v11',group:'Либидо и гормоны (с 5-й недели)',name:'Мелатонин',dose:'0.5–1 мг',when:'evening',whenLabel:'вечер',info:'Только при проблемах со сном. За 30 мин до сна.'},
+  {id:'v12',group:'Либидо и гормоны (с 5-й недели)',name:'L-теанин',dose:'100–200 мг',when:'evening',whenLabel:'вечер',info:'Расслабление без сонливости, качество сна.'},
+];
+
+// ═══ HELPERS ═══
+function today() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function loadDay(dateKey) { return JSON.parse(localStorage.getItem('day:'+dateKey)||'{}'); }
+function saveData(dateKey,data) { localStorage.setItem('day:'+dateKey, JSON.stringify(data)); }
+function getExWeight(id) { return localStorage.getItem('weights:'+id)||''; }
+function setExWeight(id,val) { localStorage.setItem('weights:'+id,val); }
+function getVitamins(dateKey) { return JSON.parse(localStorage.getItem('vitamins:'+dateKey)||'{}'); }
+function saveVitamins(dateKey,data) { localStorage.setItem('vitamins:'+dateKey, JSON.stringify(data)); }
+
+function getCustomExercises() { return JSON.parse(localStorage.getItem('custom:exercises')||'[]'); }
+function getCustomMeals(type) { return JSON.parse(localStorage.getItem('custom:meals:'+type)||'null'); }
+
+function applyCustomExercises() {
+  const customs = getCustomExercises();
+  customs.forEach(c => {
+    for(const day in WORKOUTS) {
+      const ex = WORKOUTS[day].exercises.find(e=>e.id===c.id);
+      if(ex) Object.assign(ex,c);
+    }
+  });
+  ['train','rest'].forEach(t=>{
+    const custom = getCustomMeals(t);
+    if(custom) MEALS[t] = custom;
+  });
+}
+applyCustomExercises();
+
+// ═══ TABS ═══
+function switchTab(name, el) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  el.classList.add('active');
+  if(name==='stats') renderStats();
+  // hide save btn on non-today tabs
+  const btn = document.getElementById('saveBtn');
+  btn.style.display = name==='today' ? '' : 'none';
+}
+
+// ═══ SCREEN 1: TODAY ═══
+let currentDayData = {};
+let nutModeTodayOverride = null;
+
+function initToday() {
+  const now = new Date();
+  const dow = now.getDay();
+  const months = ['января','февраля','марта','апреля','мая','июня','июля','августа','сентября','октября','ноября','декабря'];
+  document.getElementById('todayDate').textContent = `${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+  document.getElementById('todayWeekday').textContent = DAYS_RU[dow];
+
+  const key = today();
+  currentDayData = loadDay(key);
+
+  // Metrics
+  document.getElementById('inp-weight').value = currentDayData.weight||'';
+  document.getElementById('inp-water').value = currentDayData.water||'';
+  document.getElementById('inp-sleep').value = currentDayData.sleep||'';
+  document.getElementById('inp-calories').value = currentDayData.calories||'';
+  document.getElementById('inp-mood').value = currentDayData.mood||5;
+  updateMetricDisplays();
+
+  // Workout block
+  if(WORKOUT_DAYS.includes(dow)) {
+    document.getElementById('workout-today-block').style.display='block';
+    renderTodayWorkout(dow);
+  }
+
+  // Nutrition
+  const isTrainDay = WORKOUT_DAYS.includes(dow);
+  renderTodayMeals(isTrainDay ? 'train' : 'rest');
+
+  // Note
+  if(currentDayData.workoutNote) document.getElementById('workout-note').value=currentDayData.workoutNote;
+
+  // Events
+  ['inp-weight','inp-water','inp-sleep','inp-calories'].forEach(id=>{
+    document.getElementById(id).addEventListener('input', updateMetricDisplays);
+  });
+  document.getElementById('inp-mood').addEventListener('input', function(){
+    document.getElementById('mood-val').textContent=this.value;
+    this.style.accentColor = moodColor(+this.value);
+  });
+  document.getElementById('workout-note').addEventListener('input', autoResize);
+}
+
+function moodColor(v) {
+  if(v<=3) return '#e74c3c';
+  if(v<=6) return '#f39c12';
+  return '#2ecc71';
+}
+
+function updateMetricDisplays() {
+  const water = +document.getElementById('inp-water').value||0;
+  const sleep = +document.getElementById('inp-sleep').value||0;
+  const cal = +document.getElementById('inp-calories').value||0;
+  document.getElementById('water-val').textContent=`${water.toFixed(1)} / 3.0 л`;
+  document.getElementById('pb-water').style.width=Math.min(100,water/3*100)+'%';
+  document.getElementById('sleep-val').textContent=`${sleep} / 8 ч`;
+  document.getElementById('pb-sleep').style.width=Math.min(100,sleep/8*100)+'%';
+  document.getElementById('cal-val').textContent=`${cal} / 1900`;
+  document.getElementById('pb-calories').style.width=Math.min(100,cal/1900*100)+'%';
+}
+
+function renderTodayWorkout(dow) {
+  const w = WORKOUTS[dow];
+  document.getElementById('workout-today-name').textContent = w.name;
+  const checks = currentDayData.workoutChecks||{};
+  const list = document.getElementById('workout-today-list');
+  list.innerHTML = w.exercises.map(ex=>`
+    <div class="check-item">
+      <input type="checkbox" id="wex-${ex.id}" ${checks[ex.id]?'checked':''} onchange="updateWorkoutProgress()">
+      <label for="wex-${ex.id}">
+        <div style="font-weight:600">${ex.name}</div>
+        <div style="font-size:12px;color:var(--text2)">${ex.sets}×${ex.reps} · ${getExWeight(ex.id)||ex.startWeight}</div>
+      </label>
+    </div>
+  `).join('');
+  updateWorkoutProgress();
+}
+
+function updateWorkoutProgress() {
+  const dow = new Date().getDay();
+  const w = WORKOUTS[dow];
+  if(!w) return;
+  const total = w.exercises.length;
+  const done = w.exercises.filter(ex=>document.getElementById('wex-'+ex.id)?.checked).length;
+  document.getElementById('workout-progress-text').textContent=`${done} из ${total}`;
+  document.getElementById('pb-workout').style.width=(done/total*100)+'%';
+}
+
+function renderTodayMeals(mode) {
+  const checks = currentDayData.mealChecks||{};
+  const meals = MEALS[mode];
+  const badge = document.getElementById('meal-type-badge');
+  badge.innerHTML=mode==='train'?'<span class="badge" style="background:#1a2a3a;color:var(--accent)">🏋 Тренировочный день · 1900 ккал</span>':'<span class="badge" style="background:#2a1a2a;color:var(--purple)">🛋 День отдыха · 1780 ккал</span>';
+  const list = document.getElementById('meals-today-list');
+  list.innerHTML = meals.map(m=>`
+    <div class="check-item">
+      <input type="checkbox" id="meal-${m.id}" ${checks[m.id]?'checked':''} onchange="updateMealTotal('${mode}')">
+      <label for="meal-${m.id}">
+        <div style="font-weight:600">${m.time} · ${m.kcal} ккал</div>
+        <div style="font-size:12px;color:var(--text2)">${m.name}</div>
+        <div style="font-size:11px;color:var(--text2)">Б:${m.p} У:${m.c} Ж:${m.f}</div>
+      </label>
+    </div>
+  `).join('');
+  updateMealTotal(mode);
+}
+
+function updateMealTotal(mode) {
+  const meals = MEALS[mode];
+  let total=0;
+  meals.forEach(m=>{
+    if(document.getElementById('meal-'+m.id)?.checked) total+=m.kcal;
+  });
+  document.getElementById('meals-kcal-total').textContent=total;
+}
+
+function autoResize(e) {
+  e.target.style.height='auto';
+  e.target.style.height=e.target.scrollHeight+'px';
+}
+
+function saveDay() {
+  const dow = new Date().getDay();
+  const w = WORKOUTS[dow];
+  const workoutChecks={};
+  if(w) w.exercises.forEach(ex=>{
+    workoutChecks[ex.id]=!!(document.getElementById('wex-'+ex.id)?.checked);
+  });
+  const mode = WORKOUT_DAYS.includes(dow)?'train':'rest';
+  const mealChecks={};
+  MEALS[mode].forEach(m=>{ mealChecks[m.id]=!!(document.getElementById('meal-'+m.id)?.checked); });
+
+  const data = {
+    weight:+document.getElementById('inp-weight').value||null,
+    water:+document.getElementById('inp-water').value||null,
+    sleep:+document.getElementById('inp-sleep').value||null,
+    calories:+document.getElementById('inp-calories').value||null,
+    mood:+document.getElementById('inp-mood').value,
+    workoutChecks, mealChecks,
+    workoutNote: document.getElementById('workout-note').value,
+    savedAt: Date.now()
+  };
+  saveData(today(), data);
+  currentDayData = data;
+
+  const btn = document.getElementById('saveBtn');
+  btn.textContent='✓ Сохранено';
+  btn.style.background='#1a6a2a';
+  setTimeout(()=>{ btn.textContent='💾 Сохранить день'; btn.style.background=''; },2000);
+}
+</script>
+<script>
+// ═══ SCREEN 2: WORKOUTS ═══
+function renderWorkouts() {
+  const dow = new Date().getDay();
+  const container = document.getElementById('workouts-list');
+  container.innerHTML = WORKOUT_DAYS.map(d=>{
+    const w = WORKOUTS[d];
+    const isToday = d===dow;
+    return `
+      <div class="accord-header ${isToday?'active':''}" onclick="toggleAccord(this)" data-day="${d}">
+        <span style="font-weight:700;${isToday?'color:var(--accent)':''}">${w.name}</span>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="transition:transform .2s" class="accord-icon"><polyline points="6 9 12 15 18 9"/></svg>
+      </div>
+      <div class="accord-body ${isToday?'open':''}" id="accord-body-${d}">
+        ${w.exercises.map(ex=>renderExRow(ex,d)).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderExRow(ex,day) {
+  const savedW = getExWeight(ex.id);
+  return `
+    <div class="ex-row" id="ex-row-${ex.id}">
+      <div class="ex-name">${ex.name}</div>
+      <div class="ex-meta">${ex.sets}×${ex.reps}</div>
+      <div class="ex-weight-row">
+        <span style="font-size:12px;color:var(--text2)">Старт: ${ex.startWeight}</span>
+        <input type="number" placeholder="Рабочий вес" value="${savedW}" step="0.5"
+          onchange="setExWeight('${ex.id}',this.value)" style="width:100px">
+        <span style="font-size:11px;color:var(--text2)">кг</span>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEditEx('${ex.id}','${day}')">✏️</button>
+      </div>
+      <div class="edit-form" id="edit-${ex.id}">
+        <div class="edit-row"><label>Название</label><input type="text" id="ename-${ex.id}" value="${ex.name}"></div>
+        <div class="edit-row"><label>Подходы</label><input type="text" id="esets-${ex.id}" value="${ex.sets}" style="max-width:80px"><label style="margin-left:8px">Повт.</label><input type="text" id="ereps-${ex.id}" value="${ex.reps}" style="max-width:80px"></div>
+        <div class="edit-row"><label>Старт</label><input type="text" id="estart-${ex.id}" value="${ex.startWeight}"></div>
+        <button class="btn btn-accent btn-sm" onclick="saveEditEx('${ex.id}','${day}')">Сохранить</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEditEx('${ex.id}','${day}')" style="margin-left:6px">Отмена</button>
+      </div>
+    </div>
+  `;
+}
+
+function toggleAccord(header) {
+  const day = header.dataset.day;
+  const body = document.getElementById('accord-body-'+day);
+  const icon = header.querySelector('.accord-icon');
+  const isOpen = body.classList.toggle('open');
+  header.classList.toggle('active', isOpen);
+  icon.style.transform = isOpen ? 'rotate(180deg)' : '';
+}
+
+function toggleEditEx(id,day) {
+  const f = document.getElementById('edit-'+id);
+  f.classList.toggle('open');
+}
+
+function saveEditEx(id,day) {
+  const ex = WORKOUTS[day].exercises.find(e=>e.id===id);
+  if(!ex) return;
+  ex.name = document.getElementById('ename-'+id).value;
+  ex.sets = document.getElementById('esets-'+id).value;
+  ex.reps = document.getElementById('ereps-'+id).value;
+  ex.startWeight = document.getElementById('estart-'+id).value;
+  // persist
+  const customs = getCustomExercises().filter(c=>c.id!==id);
+  customs.push({id,name:ex.name,sets:ex.sets,reps:ex.reps,startWeight:ex.startWeight});
+  localStorage.setItem('custom:exercises',JSON.stringify(customs));
+  document.getElementById('ex-row-'+id).outerHTML = renderExRow(ex,day);
+}
+
+// ═══ SCREEN 3: NUTRITION ═══
+let nutMode = null;
+
+function initNutrition() {
+  const dow = new Date().getDay();
+  nutMode = WORKOUT_DAYS.includes(dow) ? 'train' : 'rest';
+  renderNutrition();
+}
+
+function setNutMode(mode) {
+  nutMode = mode;
+  document.getElementById('nut-train-btn').classList.toggle('active', mode==='train');
+  document.getElementById('nut-rest-btn').classList.toggle('active', mode==='rest');
+  renderNutrition();
+}
+
+function renderNutrition() {
+  const meals = MEALS[nutMode];
+  const container = document.getElementById('nutrition-list');
+  container.innerHTML = meals.map(m=>`
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div style="font-weight:700;font-size:15px">${m.time}</div>
+          <div style="font-size:14px;margin-top:2px">${m.name}</div>
+          <div style="font-size:12px;color:var(--text2);margin-top:4px">${m.kcal} ккал · Б:${m.p}г У:${m.c}г Ж:${m.f}г</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEditMeal('${m.id}')" style="margin-left:8px">✏️</button>
+      </div>
+      <div class="edit-form" id="medit-${m.id}">
+        <div class="edit-row"><label>Название</label><input type="text" id="mn-${m.id}" value="${m.name}"></div>
+        <div class="edit-row">
+          <label>Ккал</label><input type="number" id="mk-${m.id}" value="${m.kcal}" style="max-width:70px">
+          <label>Б</label><input type="number" id="mp-${m.id}" value="${m.p}" style="max-width:55px">
+          <label>У</label><input type="number" id="mc-${m.id}" value="${m.c}" style="max-width:55px">
+          <label>Ж</label><input type="number" id="mf-${m.id}" value="${m.f}" style="max-width:55px">
+        </div>
+        <button class="btn btn-accent btn-sm" onclick="saveEditMeal('${m.id}')">Сохранить</button>
+        <button class="btn btn-ghost btn-sm" onclick="toggleEditMeal('${m.id}')" style="margin-left:6px">Отмена</button>
+      </div>
+    </div>
+  `).join('');
+  updateNutSummary();
+}
+
+function toggleEditMeal(id) {
+  document.getElementById('medit-'+id).classList.toggle('open');
+}
+
+function saveEditMeal(id) {
+  const m = MEALS[nutMode].find(x=>x.id===id);
+  if(!m) return;
+  m.name = document.getElementById('mn-'+id).value;
+  m.kcal = +document.getElementById('mk-'+id).value;
+  m.p = +document.getElementById('mp-'+id).value;
+  m.c = +document.getElementById('mc-'+id).value;
+  m.f = +document.getElementById('mf-'+id).value;
+  localStorage.setItem('custom:meals:'+nutMode, JSON.stringify(MEALS[nutMode]));
+  renderNutrition();
+}
+
+function updateNutSummary() {
+  const meals = MEALS[nutMode];
+  const tot = meals.reduce((a,m)=>({kcal:a.kcal+m.kcal,p:a.p+m.p,c:a.c+m.c,f:a.f+m.f}),{kcal:0,p:0,c:0,f:0});
+  document.getElementById('nut-kcal').textContent=tot.kcal;
+  document.getElementById('nut-prot').textContent=tot.p;
+  document.getElementById('nut-carb').textContent=tot.c;
+  document.getElementById('nut-fat').textContent=tot.f;
+}
+
+// ═══ SCREEN 4: VITAMINS ═══
+function renderVitamins() {
+  const key = today();
+  const checks = getVitamins(key);
+  const container = document.getElementById('vitamins-list');
+  const groups = [...new Set(VITAMINS.map(v=>v.group))];
+  container.innerHTML = groups.map(g=>`
+    <div class="card">
+      <div class="card-title">${g}</div>
+      ${VITAMINS.filter(v=>v.group===g).map(v=>`
+        <div class="vit-item">
+          <div class="vit-top">
+            <input type="checkbox" id="vit-${v.id}" ${checks[v.id]?'checked':''} onchange="saveVitaminCheck('${v.id}',this.checked)"
+              style="width:20px;height:20px;min-width:20px;accent-color:var(--accent);cursor:pointer">
+            <div style="flex:1">
+              <div class="vit-name">${v.name}
+                <span class="badge badge-${v.when==='morning'?'morning':v.when==='noon'?'noon':'evening'}" style="margin-left:6px">${v.whenLabel}</span>
+              </div>
+              <div class="vit-dose">${v.dose}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="toggleVitInfo('${v.id}')">ℹ️</button>
+          </div>
+          <div class="vit-info" id="vinfo-${v.id}">${v.info}</div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('');
+  updateVitProgress();
+}
+
+function toggleVitInfo(id) {
+  document.getElementById('vinfo-'+id).classList.toggle('open');
+}
+
+function saveVitaminCheck(id, val) {
+  const key = today();
+  const checks = getVitamins(key);
+  checks[id] = val;
+  saveVitamins(key, checks);
+  updateVitProgress();
+}
+
+function updateVitProgress() {
+  const checks = getVitamins(today());
+  const done = VITAMINS.filter(v=>checks[v.id]).length;
+  const total = VITAMINS.length;
+  document.getElementById('vit-progress-text').textContent=`${done} из ${total}`;
+  document.getElementById('pb-vitamins').style.width=(done/total*100)+'%';
+}
+</script>
+<script>
+// ═══ SCREEN 5: STATS ═══
+function renderStats() {
+  renderCalendar();
+  renderSummary();
+  renderCharts();
+}
+
+function renderCalendar() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  document.getElementById('cal-month-title').textContent = `${MONTHS_RU[month]} ${year}`;
+
+  const headEl = document.getElementById('cal-days-head');
+  headEl.innerHTML = ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d=>`<div class="cal-head">${d}</div>`).join('');
+
+  const firstDay = new Date(year,month,1).getDay();
+  const offset = (firstDay===0)?6:firstDay-1;
+  const daysInMonth = new Date(year,month+1,0).getDate();
+
+  const container = document.getElementById('cal-days');
+  let html = Array(offset).fill('<div class="cal-day empty"></div>').join('');
+  const todayStr = today();
+
+  for(let d=1;d<=daysInMonth;d++) {
+    const dateStr = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = dateStr===todayStr;
+    const dayData = loadDay(dateStr);
+    let cls = 'no-data';
+    if(isToday) cls='today';
+    else if(dayData.savedAt) {
+      const goals = [
+        dayData.water>=3, dayData.sleep>=8,
+        dayData.calories>=1700 && dayData.calories<=2100
+      ].filter(Boolean).length;
+      cls = goals>=2 ? 'full' : 'partial';
+    }
+    html += `<button class="cal-day ${cls}" onclick="showDayModal('${dateStr}')">${d}</button>`;
+  }
+  container.innerHTML = html;
+}
+
+function showDayModal(dateStr) {
+  const data = loadDay(dateStr);
+  const vits = getVitamins(dateStr);
+  const vitCount = VITAMINS.filter(v=>vits[v.id]).length;
+  const [y,m,d] = dateStr.split('-');
+  const dow = new Date(+y,+m-1,+d).getDay();
+
+  let workoutPct = '';
+  if(WORKOUT_DAYS.includes(dow) && data.workoutChecks) {
+    const w = WORKOUTS[dow];
+    const done = w.exercises.filter(ex=>data.workoutChecks[ex.id]).length;
+    workoutPct = `<div style="margin-top:6px;font-size:13px;color:var(--green)">🏋 Тренировка: ${done}/${w.exercises.length}</div>`;
+  }
+
+  const content = data.savedAt ? `
+    <div style="font-weight:700;font-size:17px;margin-bottom:12px">${d}.${m}.${y} — ${DAYS_RU[dow]}</div>
+    <div class="grid2" style="gap:8px">
+      <div class="stat-mini"><div class="val">${data.weight||'—'}</div><div class="lbl">кг</div></div>
+      <div class="stat-mini"><div class="val" style="color:var(--blue)">${data.water||'—'}</div><div class="lbl">л воды</div></div>
+      <div class="stat-mini"><div class="val" style="color:var(--purple)">${data.sleep||'—'}</div><div class="lbl">ч сна</div></div>
+      <div class="stat-mini"><div class="val" style="color:var(--orange)">${data.calories||'—'}</div><div class="lbl">ккал</div></div>
+    </div>
+    <div style="margin-top:10px;font-size:14px">Самочувствие: <b>${data.mood||'—'}/10</b></div>
+    ${workoutPct}
+    <div style="margin-top:6px;font-size:13px;color:var(--text2)">💊 Витамины: ${vitCount}/${VITAMINS.length}</div>
+    ${data.workoutNote ? `<div style="margin-top:8px;font-size:13px;color:var(--text2);font-style:italic">"${data.workoutNote}"</div>` : ''}
+  ` : `<div style="text-align:center;padding:20px;color:var(--text2)">Нет данных за ${d}.${m}.${y}</div>`;
+
+  document.getElementById('dayModalContent').innerHTML = content;
+  document.getElementById('dayModal').classList.add('open');
+}
+
+function closeDayModal(e) {
+  if(e.target===document.getElementById('dayModal')) {
+    document.getElementById('dayModal').classList.remove('open');
+  }
+}
+
+function renderSummary() {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
+  const daysInMonth = new Date(year,month+1,0).getDate();
+  let weights=[], sleeps=[], moods=[], workoutDays=0, waterDays=0, vitaminDays=0, totalDays=0;
+
+  for(let d=1;d<=now.getDate();d++) {
+    const dateStr=`${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const data=loadDay(dateStr);
+    if(!data.savedAt) continue;
+    totalDays++;
+    if(data.weight) weights.push(data.weight);
+    if(data.sleep) sleeps.push(data.sleep);
+    if(data.mood) moods.push(data.mood);
+    if(data.water>=3) waterDays++;
+    const dow=new Date(year,month,d).getDay();
+    if(WORKOUT_DAYS.includes(dow) && data.workoutChecks) {
+      const w=WORKOUTS[dow];
+      const done=w.exercises.filter(ex=>data.workoutChecks[ex.id]).length;
+      if(done>=w.exercises.length*0.7) workoutDays++;
+    }
+    const vits=getVitamins(dateStr);
+    if(VITAMINS.filter(v=>vits[v.id]).length>=10) vitaminDays++;
+  }
+
+  const avg = arr => arr.length ? (arr.reduce((a,b)=>a+b,0)/arr.length).toFixed(1) : '—';
+  const items = [
+    {val:avg(weights),lbl:'Средний вес, кг'},
+    {val:avg(moods),lbl:'Среднее самочувствие'},
+    {val:avg(sleeps),lbl:'Средний сон, ч'},
+    {val:waterDays,lbl:'Дней норма воды'},
+    {val:workoutDays,lbl:'Тренировок выполнено'},
+    {val:vitaminDays,lbl:'Дней норма витаминов'},
+  ];
+  document.getElementById('stats-summary').innerHTML = items.map(i=>`
+    <div class="stat-mini"><div class="val">${i.val}</div><div class="lbl">${i.lbl}</div></div>
+  `).join('');
+}
+
+function renderCharts() {
+  const days30 = [];
+  const now = new Date();
+  for(let i=29;i>=0;i--) {
+    const d = new Date(now);
+    d.setDate(d.getDate()-i);
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    days30.push({key, label: String(d.getDate()), data: loadDay(key)});
+  }
+
+  drawLineChart('chart-weight', days30.map(d=>d.data.weight||null), days30.map(d=>d.label), '#4f8ef7', null);
+  drawBarChart('chart-water', days30.map(d=>d.data.water||0), days30.map(d=>d.label), '#3498db', 3);
+  drawBarChart('chart-sleep', days30.map(d=>d.data.sleep||0), days30.map(d=>d.label), '#9b59b6', 8);
+}
+
+function drawLineChart(canvasId, values, labels, color, goalLine) {
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth||360;
+  const H = 120;
+  canvas.width = W; canvas.height = H;
+  const pad = {l:30,r:10,t:10,b:20};
+  const pts = values.filter(v=>v!==null);
+  if(!pts.length) { ctx.fillStyle='#8888aa'; ctx.font='14px sans-serif'; ctx.fillText('Нет данных',W/2-30,H/2); return; }
+  const minV=Math.min(...pts)*0.98, maxV=Math.max(...pts)*1.02;
+  const range=maxV-minV||1;
+  const xStep=(W-pad.l-pad.r)/(values.length-1||1);
+
+  ctx.clearRect(0,0,W,H);
+  // grid
+  ctx.strokeStyle='#2a2a3e'; ctx.lineWidth=1;
+  for(let i=0;i<=4;i++) {
+    const y=pad.t+(H-pad.t-pad.b)*i/4;
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8888aa'; ctx.font='10px sans-serif';
+    ctx.fillText((maxV-(range*i/4)).toFixed(1), 0, y+4);
+  }
+  // line
+  ctx.strokeStyle=color; ctx.lineWidth=2; ctx.beginPath();
+  let first=true;
+  values.forEach((v,i)=>{
+    if(v===null) return;
+    const x=pad.l+i*xStep;
+    const y=pad.t+(H-pad.t-pad.b)*(1-(v-minV)/range);
+    if(first){ctx.moveTo(x,y);first=false;}else ctx.lineTo(x,y);
+  });
+  ctx.stroke();
+  // dots
+  values.forEach((v,i)=>{
+    if(v===null) return;
+    const x=pad.l+i*xStep;
+    const y=pad.t+(H-pad.t-pad.b)*(1-(v-minV)/range);
+    ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,3,0,Math.PI*2); ctx.fill();
+  });
+}
+
+function drawBarChart(canvasId, values, labels, color, goalLine) {
+  const canvas = document.getElementById(canvasId);
+  if(!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth||360;
+  const H = 100;
+  canvas.width = W; canvas.height = H;
+  const pad = {l:24,r:8,t:8,b:16};
+  const maxV = Math.max(goalLine*1.2, ...values, 0.1);
+  const barW = Math.max(2,(W-pad.l-pad.r)/values.length-1);
+  const step = (W-pad.l-pad.r)/values.length;
+
+  ctx.clearRect(0,0,W,H);
+  ctx.strokeStyle='#2a2a3e'; ctx.lineWidth=1;
+  [0,0.5,1].forEach(f=>{
+    const y=pad.t+(H-pad.t-pad.b)*(1-f);
+    ctx.beginPath(); ctx.moveTo(pad.l,y); ctx.lineTo(W-pad.r,y); ctx.stroke();
+    ctx.fillStyle='#8888aa'; ctx.font='9px sans-serif';
+    ctx.fillText((maxV*f).toFixed(1),0,y+3);
+  });
+  values.forEach((v,i)=>{
+    const x=pad.l+i*step;
+    const barH=(v/maxV)*(H-pad.t-pad.b);
+    const y=H-pad.b-barH;
+    ctx.fillStyle = v>=goalLine ? color : '#2a3a4a';
+    ctx.fillRect(x,y,barW,barH);
+  });
+  // goal line
+  if(goalLine) {
+    const gy=pad.t+(H-pad.t-pad.b)*(1-goalLine/maxV);
+    ctx.strokeStyle='#e74c3c'; ctx.lineWidth=1; ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(pad.l,gy); ctx.lineTo(W-pad.r,gy); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+}
+
+// ═══ INIT ═══
+document.addEventListener('DOMContentLoaded', ()=>{
+  initToday();
+  renderWorkouts();
+  initNutrition();
+  renderVitamins();
+  // Service Worker
+  if('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(e=>console.log('SW error',e));
+  }
+});
+</script>
+</body>
+</html>
+<!-- УСТАНОВКА НА ANDROID:
+1. Положи все 3 файла (index.html, manifest.json, sw.js) в одну папку
+2. На компьютере в терминале: python3 -m http.server 8080
+3. Телефон и компьютер в одной Wi-Fi сети
+4. В Chrome на телефоне открой: http://<IP_компьютера>:8080
+5. Chrome → ⋮ → «Добавить на главный экран»
+6. Готово! После первого открытия работает без интернета.
+-->
